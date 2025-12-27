@@ -313,3 +313,77 @@ canvas#bg-canvas {
   height: 20px;
   vertical-align: middle;
 }
+.draw-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(6px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.draw-panel {
+  background: var(--card);
+  color: var(--fg);
+  border-radius: 16px;
+  padding: 1rem;
+  width: 90%;
+  max-width: 520px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+}
+
+.draw-panel h2 {
+  margin: 0 0 0.5rem;
+  text-align: center;
+}
+
+#draw-canvas {
+  width: 100%;
+  height: 320px;
+  background: #000;
+  border-radius: 12px;
+  cursor: crosshair;
+}
+
+[data-theme="light"] #draw-canvas {
+  background: #fff;
+}
+
+.draw-tools {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.draw-tools button,
+.draw-tools input {
+  background: var(--card-hover);
+  color: var(--fg);
+  border: none;
+  border-radius: 999px;
+  padding: 0.35rem 0.8rem;
+  cursor: pointer;
+}
+
+.draw-toolbar,
+.draw-tools {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.draw-status {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.draw-colors button {
+  border: none;
+  cursor: pointer;
+}

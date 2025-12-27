@@ -1,7 +1,8 @@
 fetch("config.json")
   .then(res => res.json())
-  .then(config => {
-    const body = document.body;
+.then(config => {
+  window.config = config;
+  const body = document.body;
 
     // Theme memory
     const savedTheme = localStorage.getItem("theme");
@@ -124,7 +125,20 @@ fetch("config.json")
     }
 
     // Profile
-    document.getElementById("avatar").src = config.avatar;
+    const avatarEl = document.getElementById("avatar");
+    if (avatarEl && typeof config.avatar === "string" && config.avatar.trim() !== "") {
+      // Normalize protocol-less URLs that start with //
+      const testSrc = config.avatar.startsWith("//") ? "https:" + config.avatar : config.avatar;
+      const tester = new Image();
+      tester.onload = () => { avatarEl.src = testSrc; };
+      tester.onerror = () => {
+        console.warn("Avatar failed to load, removing element:", testSrc);
+        avatarEl.remove(); // or use avatarEl.style.display = "none" to keep markup
+      };
+      tester.src = testSrc; // start loading (works with absolute or relative paths)
+    } else if (avatarEl) {
+      avatarEl.remove();
+    }
     document.getElementById("name").textContent = config.name;
 
     // Time-based greeting
@@ -156,13 +170,18 @@ fetch("config.json")
     }
     
     // Info in profile
-    document.getElementById("profileCard").innerHTML = `
-      <p><strong>Alternative Names:</strong> ${config.profile.altnames}</p>
-      <p><strong>Pronouns:</strong> ${config.profile.pronouns}</p>
-      <p><strong>Location:</strong> ${config.profile.location}</p>
-      <p><strong>Relationship:</strong> ${config.profile.relationship}</p>
-      <p><strong>Age:</strong> ${age}</p>
-    `;
+    const profileCard = document.getElementById("profileCard");
+    let profileHTML = "";
+    
+    if (config.profile) {
+      if (config.profile.altnames) profileHTML += `<p><strong>Alternative Names:</strong> ${config.profile.altnames}</p>`;
+      if (config.profile.pronouns) profileHTML += `<p><strong>Pronouns:</strong> ${config.profile.pronouns}</p>`;
+      if (config.profile.location) profileHTML += `<p><strong>Location:</strong> ${config.profile.location}</p>`;
+      if (config.profile.relationship) profileHTML += `<p><strong>Relationship:</strong> ${config.profile.relationship}</p>`;
+      profileHTML += `<p><strong>Age:</strong> ${age}</p>`;
+    }
+    
+    profileCard.innerHTML = profileHTML;
 
     // Links
     const linksEl = document.getElementById("links");
@@ -229,73 +248,90 @@ fetch("config.json")
       }
     }
 
-    config.categories.forEach(cat => {
-      // Add category title as a plain heading
-      const title = document.createElement("h2");
-      title.textContent = cat.name;
-      title.className = "link-category-title"; // Optional for styling
-      linksEl.appendChild(title);
+config.categories.forEach(cat => {
+  // Skip Canvas entirely if drawing is disabled
+  if (cat.name === "Canvas" && !config.drawing?.enabled) return;
 
-    cat.links.forEach(link => {
-      const isNSFW = link.nsfw === true || link.nsfw === "true";
-      const openInNewTab = link.hasOwnProperty("newtab")
-        ? (link.newtab === true || link.newtab === "true")
-        : true;
-    
-      const a = document.createElement("a");
-      a.className = "link-card";
-    
-      // Handle copy links
-      if (link.copy) {
-        a.href = "#";
+  // Add category title
+  const title = document.createElement("h2");
+  title.textContent = cat.name;
+  title.className = "link-category-title";
+  linksEl.appendChild(title);
+
+  // =========================
+  // Canvas category handling
+  // =========================
+  if (cat.name === "Canvas") {
+    const canvasEl = createDrawingCanvas();
+    linksEl.appendChild(canvasEl);
+    return; // IMPORTANT: do not try to render links
+  }
+
+  // =========================
+  // Normal link categories
+  // =========================
+  if (!Array.isArray(cat.links)) return;
+
+  cat.links.forEach(link => {
+    const isNSFW = link.nsfw === true || link.nsfw === "true";
+    const openInNewTab = link.hasOwnProperty("newtab")
+      ? (link.newtab === true || link.newtab === "true")
+      : true;
+
+    const a = document.createElement("a");
+    a.className = "link-card";
+
+    // Handle copy links
+    if (link.copy) {
+      a.href = "#";
+      a.onclick = (e) => {
+        e.preventDefault();
+        navigator.clipboard.writeText(link.copy).then(() => {
+          const previewEl = a.querySelector(".link-preview");
+          const originalHTML = previewEl.innerHTML;
+
+          previewEl.innerHTML =
+            "<span style='color:#43aa8b;'>✅ Copied!</span>";
+
+          setTimeout(() => {
+            previewEl.innerHTML = originalHTML;
+          }, 1500);
+        });
+      };
+    }
+    // Handle normal URL links
+    else if (link.url) {
+      a.href = link.url;
+      if (openInNewTab) a.target = "_blank";
+
+      if (isNSFW) {
+        a.removeAttribute("href");
+        a.removeAttribute("target");
+        a.style.border = "2px solid #ff4081";
+        a.style.cursor = "pointer";
+        a.style.userSelect = "none";
         a.onclick = (e) => {
           e.preventDefault();
-          navigator.clipboard.writeText(link.copy).then(() => {
-            const previewEl = a.querySelector(".link-preview");
-            const originalHTML = previewEl.innerHTML;
-        
-            // Show temporary confirmation
-            previewEl.innerHTML = "<span style='color:#43aa8b;'>✅ Copied!</span>";
-        
-            // Restore after delay
-            setTimeout(() => {
-              previewEl.innerHTML = originalHTML;
-            }, 1500);
-          });
+          showNSFWModal(link, openInNewTab);
         };
-      } 
-      // Handle normal URL links
-      else if (link.url) {
-        a.href = link.url;
-        if (openInNewTab) a.target = "_blank";
-    
-        // If link.nsfw is true, override click behavior
-        if (isNSFW) {
-          a.removeAttribute("href");
-          a.removeAttribute("target");
-          a.style.border = "2px solid #ff4081";
-          a.style.cursor = "pointer";
-          a.style.userSelect = "none";
-          a.onclick = (e) => {
-            e.preventDefault();
-            showNSFWModal(link, openInNewTab);
-          };
-        }
       }
-    
-      // Shared visual layout
-      a.innerHTML = `
-        <div class="link-emoji">${link.emoji}</div>
-        <div>
-          <div><strong>${link.title}</strong>${isNSFW ? ' <span style="color:#ff4081;font-size:1.2em;" title="NSFW">🔞</span>' : ''}</div>
-          <div class="link-preview">${link.desc}</div>
-        </div>
-      `;
-    
-      linksEl.appendChild(a);
-    });
+    }
 
-    });
+    // Shared visual layout
+    a.innerHTML = `
+      <div class="link-emoji">${link.emoji}</div>
+      <div>
+        <div>
+          <strong>${link.title}</strong>
+          ${isNSFW ? '<span style="color:#ff4081;font-size:1.2em;" title="NSFW"> 🔞</span>' : ''}
+        </div>
+        <div class="link-preview">${link.desc}</div>
+      </div>
+    `;
+
+    linksEl.appendChild(a);
+  });
+});
 
 // Next Con
 if (config.nextCon && config.nextCon.name && config.nextCon.startDate && config.nextCon.endDate) {
@@ -629,42 +665,6 @@ if (config.discordId) {
 
 // Background animation
 const canvas = document.getElementById("bg-canvas");
-const ctx = canvas.getContext("2d");
-let w, h, particles = [];
-
-function resize() {
-  w = canvas.width = window.innerWidth;
-  h = canvas.height = window.innerHeight;
-}
-window.addEventListener("resize", resize);
-resize();
-
-function spawnParticles(count = 100) {
-  particles = Array.from({ length: count }, () => ({
-    x: Math.random() * w,
-    y: Math.random() * h,
-    vx: (Math.random() - 0.5) * 0.5,
-    vy: (Math.random() - 0.5) * 0.5,
-    r: Math.random() * 2 + 1
-  }));
-}
-spawnParticles();
-
-function animate() {
-  ctx.clearRect(0, 0, w, h);
-  for (const p of particles) {
-    p.x += p.vx;
-    p.y += p.vy;
-    if (p.x < 0 || p.x > w) p.vx *= -1;
-    if (p.y < 0 || p.y > h) p.vy *= -1;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-    ctx.fillStyle = "rgba(168, 168, 168, 0.5)";
-    ctx.fill();
-  }
-  requestAnimationFrame(animate);
-}
-animate();
 
     let foxModalOpen = false;
     document.getElementById("secretFox").onclick = () => {

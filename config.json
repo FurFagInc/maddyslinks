@@ -1,17 +1,17 @@
 {
-  "name": "Luna",
-  "bio": "Digital chaos gremlin & toolmaker. Former gang monkey, retired staff for larger groups & The Furry Hideout (VRChat). Now promoted to \"Ban On Sight\". There's an easter egg somewhere on this page. Find it if you can! 🦊",
-  "avatar": "https://avatars.githubusercontent.com/u/32457983?v=4",
-  "bioStyle": "terminal",
-  "discordId": "257124488141864960",
+  "name": "Maddy",
+  "bio": "Genuine faggot.",
+  "avatar": "N/A",
+  "bioStyle": "bubble",
+  "discordId": "N/A",
   "profile": {
-    "altnames": "Lulu, Lu, Luni",
-    "pronouns": "She/Her/They/Them",
+    "altnames": "Madeline",
+    "pronouns": "She/Her",
     "location": "Denmark",
     "relationship": "Taken"
   },
   "birthday": {
-    "date": "2004-06-15",
+    "date": "2000-10-14",
     "timezone": "Europe/Copenhagen"
   },
   "nextCon": {
@@ -20,115 +20,26 @@
     "endDate": "202x-mm-dd",
     "location": "n/a"
   },
+  "drawing": {
+    "enabled": true,
+    "workerUrl": "https://red-thunder-2ba3.plsmajor.workers.dev/",
+    "rateLimitSeconds": 120,
+    "allowName": true,
+    "colors": ["#ffffff", "#ff4081", "#43aa8b", "#f9c74f", "#577590", "#000000"],
+    "canvas": {
+      "width": 1280,
+      "height": 720,
+      "backgroundDark": "#ffffff",
+      "backgroundLight": "#ffffff",
+      "maxBrushSize": 20,
+      "defaultBrushSize": 4,
+      "defaultColor": "#000000"
+    }
+  },
   "categories": [
     {
-      "name": "Main Links",
+      "name": "Contact",
       "links": [
-        {
-          "title": "Developer Website",
-          "url": "https://imluna.dev",
-          "emoji": "🤓",
-          "desc": "Nerdy shit inbound"
-        },
-        {
-          "title": "Personal Website",
-          "url": "https://lunauwu.net",
-          "emoji": "👀",
-          "desc": "Learn more about me"
-        },
-        {
-          "title": "Deadstop Execution",
-          "url": "https://discord.gg/9jYQFyh5Qz",
-          "emoji": "💀",
-          "desc": "Simple alerts if bad actors are in your VRChat instance."
-        },
-        {
-          "title": "Ko-fi",
-          "url": "https://ko-fi.com/imlunauwu",
-          "emoji": "☕",
-          "desc": "Support me with caffeine"
-        },
-        {
-          "title": "Throne",
-          "url": "https://throne.com/lunauwu",
-          "emoji": "👑",
-          "desc": "Buy me silly shit if you wanna"
-        },
-        {
-          "title": "PayPal",
-          "url": "https://www.paypal.com/paypalme/ImUwULuna",
-          "emoji": "💵",
-          "desc": "Direct payment method if you prefer."
-        }
-      ]
-    },
-    {
-      "name": "Socials",
-      "links": [
-        {
-          "title": "GitHub",
-          "url": "https://github.com/ImLunaUwU",
-          "emoji": "💻",
-          "desc": "My code playground"
-        },
-        {
-          "title": "Twitter (X)",
-          "url": "https://x.com/ImLunaUwU",
-          "emoji": "🐦",
-          "desc": "Look at my weird tweets (Little Activity)"
-        },
-        {
-          "title": "VRChat Profile",
-          "url": "https://vrchat.com/home/user/usr_75f061d8-6189-443c-b83c-0e8f9f01c153",
-          "emoji": "🕶️",
-          "desc": "Please talk to me before adding."
-        },
-        {
-          "title": "Pronouns Page",
-          "url": "https://en.pronouns.page/@LunaUwU",
-          "emoji": "⚧️",
-          "desc": "Because why not."
-        },
-        {
-          "title": "Discord",
-          "copy": "imlunauwu",
-          "emoji": "👾",
-          "desc": "Click to copy my Discord username. Do not randomly add me, you will be blocked.<br>Username: imlunauwu"
-        },
-        {
-          "title": "YouTube",
-          "url": "https://www.youtube.com/@lunalikesgirls",
-          "emoji": "📺",
-          "desc": "My YouTube channel is currently inactive."
-        },
-        {
-          "title": "TikTok",
-          "url": "https://www.tiktok.com/@imlunauwu",
-          "emoji": "📹",
-          "desc": "Like my YT, TikTok is also more or less inactive."
-        }
-      ]
-    },
-    {
-      "name": "Recent Projects",
-      "links": [
-        {
-          "title": "Audio Mixer",
-          "url": "https://github.com/ImLunaUwU/Audio-Mixer/",
-          "emoji": "🎛️",
-          "desc": "Free and simple alternative to VoiceMeeter"
-        }
-      ]
-    },
-    {
-      "name": "Business Stuff",
-      "links": [
-        {
-          "title": "Email",
-          "url": "mailto://contact@lunauwu.net",
-          "emoji": "📧",
-          "desc": "My business email. Do not mail me randomly, you will be blocked."
-        },
         {
           "title": "Discord",
           "copy": "imlunauwu",
@@ -149,6 +60,9 @@
           "newtab": "false"
         }
       ]
+    },
+    {
+      "name": "Canvas"
     }
   ]
 }
