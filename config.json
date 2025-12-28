@@ -27,8 +27,8 @@
     "allowName": true,
     "colors": ["#ffffff", "#ff4081", "#43aa8b", "#f9c74f", "#577590", "#000000"],
     "canvas": {
-      "width": 1280,
-      "height": 720,
+      "width": 1920,
+      "height": 1080,
       "backgroundDark": "#ffffff",
       "backgroundLight": "#ffffff",
       "maxBrushSize": 20,

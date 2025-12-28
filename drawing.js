@@ -23,21 +23,46 @@ function createDrawingCanvas() {
   const canvasWrap = document.createElement("div");
   canvasWrap.style.position = "relative";
   canvasWrap.style.display = "flex";
-  canvasWrap.style.justifyContent = "center";
+  canvasWrap.style.flexDirection = "column";
   canvasWrap.style.alignItems = "center";
   canvasWrap.style.width = "100%";
-  canvasWrap.style.paddingBottom = UI_PADDING + "px";
   canvasWrap.style.aspectRatio = `${d.canvas.width} / ${d.canvas.height}`;
-  canvasWrap.style.maxHeight = `${MAX_CANVAS_VH}vh`;
+  canvasWrap.style.maxWidth = "100%";
+  canvasWrap.style.width = "100%";
+  canvasWrap.style.height = "auto";
+  canvasWrap.style.maxHeight = "none";
+  canvasWrap.style.flex = "0 0 auto";
+  canvasWrap.style.width = "100%";
+  canvasWrap.style.alignSelf = "stretch";
+  
+
+
 
   const canvas = document.createElement("canvas");
   canvas.style.display = "block";
   canvas.style.borderRadius = "8px";
   canvas.style.touchAction = "none";
+  canvas.style.userSelect = "none";
+  canvas.style.webkitUserSelect = "none";
   canvas.style.maxWidth = "100%";
   canvas.style.maxHeight = "100%";
-  canvas.style.height = "auto";
+  canvas.style.width = "100%";
+  canvas.style.height = "100%";
   canvasWrap.appendChild(canvas);
+  const canvasSpacer = document.createElement("div");
+canvasSpacer.style.height = UI_PADDING + "px";
+canvasSpacer.style.flexShrink = "0";
+canvasWrap.appendChild(canvasSpacer);
+
+
+  if (window.matchMedia("(max-width: 768px)").matches) {
+canvasWrap.style.maxHeight = "none";
+
+if (window.matchMedia("(max-width: 768px)").matches) {
+  canvasWrap.style.maxHeight = `${MAX_CANVAS_VH}vh`;
+}
+
+}
 
   /* ================= TOOLBAR ================= */
   const toolbar = document.createElement("div");
@@ -88,71 +113,127 @@ function createDrawingCanvas() {
   footer.append(sizeInput, clearBtn, sendBtn, status);
   card.append(toolbar, canvasWrap, footer);
 
-  /* ================= CANVAS ================= */
+  /* ================= CANVAS SETUP ================= */
   const ctx = canvas.getContext("2d");
   let strokeColor = d.canvas.defaultColor;
   let erasing = false;
 
-  function resetCanvas() {
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = d.canvas.width * dpr;
-    canvas.height = d.canvas.height * dpr;
-    canvas.style.width = d.canvas.width + "px";
-    canvas.style.height = d.canvas.height + "px";
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+function resetCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
 
-    ctx.fillStyle =
-      document.documentElement.dataset.theme === "light"
-        ? d.canvas.backgroundLight
-        : d.canvas.backgroundDark;
+  canvas.width  = Math.round(rect.width  * dpr);
+  canvas.height = Math.round(rect.height * dpr);
 
-    ctx.fillRect(0, 0, d.canvas.width, d.canvas.height);
-    snapshot();
-  }
+  // IMPORTANT: do NOT apply DPR here
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-  /* ================= FULLSCREEN ================= */
-  function fitCanvas() {
-    canvasWrap.style.flex = "1";
-    canvasWrap.style.maxHeight = "none";
-    canvasWrap.style.paddingBottom = "0";
+  ctx.fillStyle =
+    document.documentElement.dataset.theme === "light"
+      ? d.canvas.backgroundLight
+      : d.canvas.backgroundDark;
 
-    canvas.style.position = "absolute";
-    canvas.style.left = "50%";
-    canvas.style.top = "50%";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  snapshot();
+}
 
-    const toolbarH = toolbar.getBoundingClientRect().height;
-    const footerH = footer.getBoundingClientRect().height;
+/* ================= FULLSCREEN ================= */
 
-    const viewportW = window.visualViewport?.width ?? document.documentElement.clientWidth;
-    const viewportH = window.visualViewport?.height ?? document.documentElement.clientHeight;
+/* ================= FULLSCREEN (LOCKED) ================= */
 
-    const scale = Math.min(
-      viewportW / d.canvas.width,
-      (viewportH - toolbarH - footerH) / d.canvas.height
-    );
+function fitCanvasFullscreen() {
+  card.style.padding = "12px";
 
-    canvas.style.transform = `translate(-50%, -50%) scale(${scale})`;
-    canvas.style.marginTop = "-45px";
-  }
+  canvasWrap.style.flex = "1";
+  canvasWrap.style.maxHeight = "100%";
 
-  function resetFit() {
-    canvas.style.position = "";
-    canvas.style.left = "";
-    canvas.style.top = "";
-    canvas.style.transform = "";
-    canvas.style.marginTop = "0";
+  canvasSpacer.style.display = "none";
 
-    canvasWrap.style.flex = "";
-    canvasWrap.style.maxHeight = `${MAX_CANVAS_VH}vh`;
-    canvasWrap.style.paddingBottom = UI_PADDING + "px";
-  }
+  canvas.style.position = "absolute";
+  canvas.style.left = "50%";
+  canvas.style.top = "50%";
 
-  fsBtn.onclick = () => card.requestFullscreen?.();
-  document.addEventListener("fullscreenchange", () =>
-    document.fullscreenElement === card ? fitCanvas() : resetFit()
+  const rect = canvas.getBoundingClientRect();
+
+  const vw = window.visualViewport?.width ?? window.innerWidth;
+  const vh = window.visualViewport?.height ?? window.innerHeight;
+
+  // Hard limits — THIS is what fixes "too big"
+  const MAX_W = vw * 0.9;
+  const MAX_H = vh * 0.85;
+
+  const scale = Math.min(
+    MAX_W / rect.width,
+    MAX_H / rect.height
   );
 
-  /* ================= DRAWING + PEN ================= */
+  const vv = window.visualViewport;
+  const offsetX = vv ? vv.offsetLeft : 0;
+  const offsetY = vv ? vv.offsetTop  : 0;
+
+  const toolbarH = toolbar.getBoundingClientRect().height;
+const footerH  = footer.getBoundingClientRect().height;
+
+// Optical center correction
+const centerBiasY = (footerH - toolbarH) * 2.5;
+
+canvas.style.transform = `
+  translate(
+    calc(-50% + ${offsetX / scale}px),
+    calc(-50% + ${offsetY / scale - centerBiasY / scale}px)
+  )
+  scale(${scale})
+`;
+
+}
+
+function resetCanvasFullscreen() {
+  card.style.padding = "0.75rem";
+
+  canvasWrap.style.flex = "";
+  canvasWrap.style.maxHeight = `${MAX_CANVAS_VH}vh`;
+
+  canvasSpacer.style.display = "";
+
+  canvas.style.position = "";
+  canvas.style.left = "";
+  canvas.style.top = "";
+  canvas.style.transform = "";
+}
+
+
+const ua = navigator.userAgent;
+
+// iPadOS detection (new & old)
+const isIOS = /iPad|iPhone|iPod/.test(ua) ||
+  (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+// Safari-only fullscreen on iOS
+const isSafari = isIOS &&
+  /Safari/.test(ua) &&
+  !/CriOS|FxiOS|EdgiOS|DuckDuckGo|OPiOS/.test(ua);
+
+// Fullscreen unsupported environments
+const fullscreenUnsupported = isIOS && !isSafari;
+
+if (fullscreenUnsupported) {
+  fsBtn.disabled = true;
+  fsBtn.style.opacity = "0.4";
+  fsBtn.style.cursor = "not-allowed";
+  fsBtn.title = "Fullscreen not supported in this browser";
+}
+
+if (!fullscreenUnsupported) {
+  fsBtn.onclick = () => card.requestFullscreen?.();
+
+  document.addEventListener("fullscreenchange", () => {
+    document.fullscreenElement === card
+      ? fitCanvasFullscreen()
+      : resetCanvasFullscreen();
+  });
+}
+
+  /* ================= DRAWING ================= */
   let drawing = false;
   let points = [];
   let history = [];
@@ -164,23 +245,34 @@ function createDrawingCanvas() {
     return e.pointerType === "pen" && e.buttons === 32;
   }
 
-  function getPressure(e) {
-    if (e.pointerType === "pen") return Math.max(0.05, e.pressure || 0);
-    if (e.pointerType === "touch") return 0.6;
-    return 0.5;
+function getPressure(e) {
+  if (e.pointerType === "pen") {
+    return Math.max(0.05, e.pressure || 0.5);
   }
+
+  if (e.pointerType === "touch") {
+    return 0.75; // stable touch feel
+  }
+
+  return 0.5; // mouse
+}
+
 
   function smoothPressure(p, n) {
     return p * 0.7 + n * 0.3;
   }
 
-  function pos(e) {
-    const r = canvas.getBoundingClientRect();
-    return {
-      x: (e.clientX - r.left) * (canvas.width / r.width),
-      y: (e.clientY - r.top) * (canvas.height / r.height)
-    };
-  }
+function posFromXY(clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+
+  const scaleX = canvas.width  / rect.width;
+  const scaleY = canvas.height / rect.height;
+
+  return {
+    x: (clientX - rect.left) * scaleX,
+    y: (clientY - rect.top)  * scaleY
+  };
+}
 
   function snapshot() {
     history.push(canvas.toDataURL());
@@ -188,62 +280,120 @@ function createDrawingCanvas() {
     redo.length = 0;
   }
 
-  canvas.addEventListener("pointerdown", e => {
-    try { canvas.setPointerCapture(e.pointerId); } catch {}
-    drawing = true;
-    penEraserActive = isPenEraser(e);
-    lastPressure = getPressure(e);
-    points = [pos(e)];
+let strokeDirty = false;
+
+/* ===== POINTER (mouse + pen) ===== */
+canvas.addEventListener("pointerdown", e => {
+  e.preventDefault();
+
+  drawing = true;
+  penEraserActive = isPenEraser(e);
+  lastPressure = getPressure(e);
+  strokeDirty = true;
+
+  points = [posFromXY(e.clientX, e.clientY)];
+}, { passive: false });
+
+canvas.addEventListener("pointermove", e => {
+  if (!drawing) return;
+  e.preventDefault();
+
+let pressure = getPressure(e);
+
+// Only smooth mouse input
+if (e.pointerType !== "pen") {
+  pressure = smoothPressure(lastPressure, pressure);
+}
+
+lastPressure = pressure;
+
+
+  drawPoint(posFromXY(e.clientX, e.clientY), pressure);
+}, { passive: false });
+
+canvas.addEventListener("pointerup", endStroke);
+canvas.addEventListener("pointercancel", endStroke);
+
+/* ===== TOUCH FALLBACK (ANDROID / iOS) ===== */
+canvas.addEventListener("touchstart", e => {
+  e.preventDefault();
+  const t = e.touches[0];
+  if (!t) return;
+
+  drawing = true;
+  lastPressure = 0.8;          // harder clamp for touch
+  strokeDirty = true;
+
+  points = [posFromXY(t.clientX, t.clientY)];
+}, { passive: false });
+
+canvas.addEventListener("touchmove", e => {
+  if (!drawing) return;
+  e.preventDefault();
+
+  const t = e.touches[0];
+  if (!t) return;
+
+  drawPoint(posFromXY(t.clientX, t.clientY), lastPressure);
+}, { passive: false });
+
+canvas.addEventListener("touchend", endStroke);
+canvas.addEventListener("touchcancel", endStroke);
+
+/* ===== DRAW CURVE ===== */
+function drawPoint(p, pressure) {
+  const activeEraser = penEraserActive || erasing;
+  points.push(p);
+
+  // Use a wider window for mobile smoothness
+  if (points.length < 4) return;
+
+  const [p0, p1, p2, p3] = points.slice(-4);
+
+  const m1 = {
+    x: (p0.x + p1.x) / 2,
+    y: (p0.y + p1.y) / 2
+  };
+  const m2 = {
+    x: (p2.x + p3.x) / 2,
+    y: (p2.y + p3.y) / 2
+  };
+
+  ctx.lineWidth = Math.max(1, sizeInput.value * pressure);
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.strokeStyle = strokeColor;
+  ctx.globalCompositeOperation =
+    activeEraser ? "destination-out" : "source-over";
+
+  ctx.beginPath();
+  ctx.moveTo(m1.x, m1.y);
+  ctx.quadraticCurveTo(p2.x, p2.y, m2.x, m2.y);
+  ctx.stroke();
+}
+
+/* ===== END STROKE ===== */
+function endStroke() {
+  if (!drawing) return;
+
+  drawing = false;
+  penEraserActive = false;
+  points = [];
+  ctx.globalCompositeOperation = "source-over";
+
+  // Snapshot ONCE per stroke (performance critical)
+  if (strokeDirty) {
     snapshot();
-  });
+    strokeDirty = false;
+  }
+}
 
-  canvas.addEventListener("pointermove", e => {
-    if (!drawing) return;
-
-    const pressure = smoothPressure(lastPressure, getPressure(e));
-    lastPressure = pressure;
-
-    const activeEraser = penEraserActive || erasing;
-
-    points.push(pos(e));
-    if (points.length < 3) return;
-
-    const [p0, p1, p2] = points.slice(-3);
-    const m1 = { x: (p0.x + p1.x) / 2, y: (p0.y + p1.y) / 2 };
-    const m2 = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
-
-    ctx.lineWidth = Math.max(1, sizeInput.value * pressure);
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.strokeStyle = strokeColor;
-    ctx.globalCompositeOperation =
-      activeEraser ? "destination-out" : "source-over";
-
-    ctx.beginPath();
-    ctx.moveTo(m1.x, m1.y);
-    ctx.quadraticCurveTo(p1.x, p1.y, m2.x, m2.y);
-    ctx.stroke();
-  });
-
-  canvas.addEventListener("pointerup", () => {
-    drawing = false;
-    penEraserActive = false;
-    points = [];
-    ctx.globalCompositeOperation = "source-over";
-  });
-
-  canvas.addEventListener("pointercancel", () => {
-    drawing = false;
-    penEraserActive = false;
-    points = [];
-    ctx.globalCompositeOperation = "source-over";
-  });
 
   /* ================= UNDO / REDO ================= */
   undoBtn.onclick = () => {
     if (history.length > 1) {
       redo.push(history.pop());
-      restore(history[history.length - 1]);
+      restore(history.at(-1));
     }
   };
 
@@ -287,7 +437,6 @@ function createDrawingCanvas() {
   sendBtn.onclick = () => {
     const now = Date.now();
     const last = Number(localStorage.getItem("canvasLastSent") || 0);
-
     if (now - last < rateLimitMs) {
       status.textContent = "⏳ Rate limited";
       return;
@@ -311,7 +460,7 @@ function createDrawingCanvas() {
     });
   };
 
-  resetCanvas();
+  requestAnimationFrame(resetCanvas);
   return card;
 
   /* ================= HELPERS ================= */
